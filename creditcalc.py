@@ -19,21 +19,26 @@ def format_periods_count(periods):
         print("Credit was already paid.")
 
 
-def get_total(monthly_pay, periods):
-    return math.ceil(monthly_pay * periods)
-
-
 def get_overpay(principal, monthly_pay, periods):
-    return math.ceil(abs(principal - get_total(monthly_pay, periods)))
+    total = math.ceil(monthly_pay * periods)
+    return math.ceil(abs(principal - total))
 
 
-def get_differentiate_payment(credit_principal, nom_inter_rate, periods):
+def get_interest_rate(interest):
+    return interest / 1200
+
+
+# formula for calculating differentiate payment:
+# D = P / n + i * (P - (P * (m - 1)) / n)
+# [D] = differentiated payment; [P] = credit principal; [n] = number of payments (months, periods);
+# [i] = nominal interest rate, usually 1/12 of the annual interest rate; [m] = current period;
+def get_differentiate_payment(credit_principal, interest, periods):
     total = 0
-    nom_inter_rate = nom_inter_rate / 1200
+    interest_rate = get_interest_rate(interest)
     before_brackets = credit_principal / periods
     for period in range(1, periods + 1):
         diff_pay = math.ceil(
-            before_brackets + nom_inter_rate * (credit_principal - (credit_principal * (period - 1) / periods)))
+            before_brackets + interest_rate * (credit_principal - (credit_principal * (period - 1) / periods)))
         print(f"Month {period}: payment is {diff_pay}")
         total += diff_pay
 
@@ -42,8 +47,12 @@ def get_differentiate_payment(credit_principal, nom_inter_rate, periods):
     print(f"Overpayment = {overpay}")
 
 
+# formula for calculating annuity payment:
+# A = P * ((i * (1+i)^n) / ((1+i)^n - 1))
+# [A] = annuity payment; [P] = loan principal;
+# other variables are same as in the differentiate payment formula
 def ann_monthly_pay(principal, periods, interest, payment):
-    interest_rate = interest / 1200
+    interest_rate = get_interest_rate(interest)
     if payment and periods and principal is None:
         x = math.pow((1 + interest_rate), periods)
         cred_principal = math.floor(payment / (interest_rate * x / (x - 1)))
@@ -60,8 +69,10 @@ def ann_monthly_pay(principal, periods, interest, payment):
         print(f"Overpayment = {get_overpay(principal, monthly_pay, periods)}")
 
 
+# getting command-line arguments
 args = sys.argv
 
+# initializing new OptionParser object and adding new options to it
 parser = OptionParser()
 
 parser.add_option("--type",
